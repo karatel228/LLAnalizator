@@ -1,0 +1,13 @@
+﻿  Source.cpp
+c:\users\ezvolal\source\repos\llanalizator\llanalizator\source.cpp(39): warning C4018: '<': signed/unsigned mismatch
+c:\users\ezvolal\source\repos\llanalizator\llanalizator\source.cpp(54): warning C4018: '<': signed/unsigned mismatch
+c:\users\ezvolal\source\repos\llanalizator\llanalizator\source.cpp(87): warning C4018: '<': signed/unsigned mismatch
+c:\users\ezvolal\source\repos\llanalizator\llanalizator\source.cpp(92): warning C4018: '<': signed/unsigned mismatch
+c:\users\ezvolal\source\repos\llanalizator\llanalizator\source.cpp(112): warning C4018: '<': signed/unsigned mismatch
+c:\users\ezvolal\source\repos\llanalizator\llanalizator\source.cpp(114): warning C4018: '<': signed/unsigned mismatch
+c:\users\ezvolal\source\repos\llanalizator\llanalizator\source.cpp(141): warning C4018: '<': signed/unsigned mismatch
+c:\users\ezvolal\source\repos\llanalizator\llanalizator\source.cpp(143): warning C4018: '<': signed/unsigned mismatch
+c:\users\ezvolal\source\repos\llanalizator\llanalizator\source.cpp(185): warning C4018: '<': signed/unsigned mismatch
+c:\users\ezvolal\source\repos\llanalizator\llanalizator\source.cpp(201): warning C4018: '<': signed/unsigned mismatch
+c:\users\ezvolal\source\repos\llanalizator\llanalizator\source.cpp(209): warning C4018: '<': signed/unsigned mismatch
+  LLAnalizator.vcxproj -> C:\Users\ezvolal\source\repos\LLAnalizator\Debug\LLAnalizator.exe
