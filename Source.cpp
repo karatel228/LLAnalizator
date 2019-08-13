@@ -97,7 +97,7 @@ vector<vector<pair<string, string>>> firsts(vector<vector<string>>  grammar) {
 				bool empty_flag = false;
 				do {
 					for (auto expr : first) {
-						if (expr.begin()->first == "<"+tokens[pos]) {
+						if (expr.begin()->first == "<" + tokens[pos]) {
 							vect.erase(vect.begin() + i);
 							for (int j = 1; j < expr.size(); j++) {
 								if (expr[j].first == "e")
@@ -105,13 +105,13 @@ vector<vector<pair<string, string>>> firsts(vector<vector<string>>  grammar) {
 								if (!find(vect, expr[j].first))
 									vect.push_back(pair<string, string>(expr[j].first, expr.begin()->first));
 							}
-							if (empty_flag) {
-								pos++;
-							}
-							else
-								break;
+							break;
 						}
 					}
+						if (empty_flag) 
+								pos++;
+						else
+							break;				
 				} while (pos != tokens.size());
 			}
 		}
@@ -121,7 +121,7 @@ vector<vector<pair<string, string>>> firsts(vector<vector<string>>  grammar) {
 
 }
 
-vector<vector<pair<string, string>>> follows(vector<vector<string>>  grammar) {
+vector<vector<pair<string, string>>> follows(vector<vector<string>>  grammar, vector<vector<pair<string, string>>> firsts) {
 	vector<vector<pair<string, string>>> follow;
 	follow.push_back(vector <pair<string, string>>());
 	follow[0].push_back(pair<string, string>(grammar[0][0], ""));
@@ -155,11 +155,12 @@ vector<vector<pair<string, string>>> follows(vector<vector<string>>  grammar) {
 						}
 					}
 					if (j != tokens.size() - 1) 
-						follow[pos].push_back(pair<string, string>((tokens[j+1].back()=='>' ? "<" + tokens[j + 1] : tokens[j + 1]), "e"));							
+						follow[pos].push_back(pair<string, string>((tokens[j+1].back()=='>' ? "<" + tokens[j + 1] : tokens[j + 1]), "&"));							
 					else
 						for (int z = 0; z < follow.size(); z++) {
 							if (follow[z][0].first == elem[0])
 								for (int k = 1; k < follow[z].size(); k++) {
+									if(!find(follow[pos], follow[z][k].first))
 									follow[pos].push_back(follow[z][k]);
 								}
 						}
@@ -169,6 +170,20 @@ vector<vector<pair<string, string>>> follows(vector<vector<string>>  grammar) {
 
 		}
 
+	}
+
+	for (auto &vect : follow) {
+		for (int i = 1; i < vect.size(); i++) {
+			if (vect[i].first.front() == '<') {
+				for (auto first : firsts) {
+					if (first.begin()->first == vect[i].first) {
+						vect.erase(vect.begin() + i);
+						vect.insert(vect.begin() + i, first.begin() + 1, first.end());
+						break;
+					}
+				}
+			}
+		}
 	}
 
 	return follow;
@@ -215,8 +230,10 @@ int main() {
 
 	vector<vector<pair<string, string>>> first = firsts(gramm);
 		
-	vector<vector<pair<string, string>>> follow = follows(gramm);
+	vector<vector<pair<string, string>>> follow = follows(gramm, first);
 
+
+	cout << "FIRSTS" << endl;
 	for (int i = 0; i < first.size(); i++)
 	{
 		for (auto &it:first[i]) {
@@ -224,7 +241,8 @@ int main() {
 		}
 		cout << endl;
 	}
-
+	cout << "==============================================================================================================================" << endl;
+	cout << "FOLLOWS" << endl;
 	for (int i = 0; i < follow.size(); i++)
 	{
 		for (auto &it : follow[i]) {
