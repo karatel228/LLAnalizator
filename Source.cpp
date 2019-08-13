@@ -32,14 +32,15 @@ bool find(vector<pair<string, string>> vect, string symbol) {
 
 vector<vector<pair<string, string>>> firsts(vector<vector<string>>  grammar) {
 	vector<vector<pair<string, string>>> first;
+	vector<string> tokens;
 	
 	for (int i = grammar.size() - 1; i >= 0; i--) {
 		first.push_back(vector < pair<string, string>>());
 		first[grammar.size() - 1 - i].push_back(pair<string, string>(grammar[i][0], ""));
 		for (int j = 1; j < grammar[i].size(); j++) {
-			vector<string> tokens = split(grammar[i][j], "<");
+			tokens = split(grammar[i][j], "<");
 			if (tokens.size() == 1)
-				first[grammar.size() - 1 - i].push_back(pair<string, string>(tokens[0], "e"));
+				first[grammar.size() - 1 - i].push_back(pair<string, string>(tokens[0], "&"));
 			else if (tokens[0] != "")
 				first[grammar.size() - 1 - i].push_back(pair<string, string>(tokens[0], "<" + tokens[1]));
 			else {
@@ -59,12 +60,16 @@ vector<vector<pair<string, string>>> firsts(vector<vector<string>>  grammar) {
 								}
 								break;
 							}
-							if ((z == 0) && first[z].begin()->first != tokens[pos])
-								first[grammar.size() - 1 - i].push_back(pair<string, string>(tokens[pos], "e"));
+							if ((z == 0) && first[z].begin()->first != tokens[pos]) {
+								string buffer = tokens[pos];
+								for (int p = pos + 1; p < tokens.size(); p++) {
+									buffer +="<" + tokens[p];
+								}
+								first[grammar.size() - 1 - i].push_back(pair<string, string>(buffer, "&"));
+							}
 						}
 						if (empty_flag) {
 							pos++;
-							continue;
 						}
 						else
 							break;
@@ -73,7 +78,7 @@ vector<vector<pair<string, string>>> firsts(vector<vector<string>>  grammar) {
 						if (pos + 1 != tokens.size())
 							first[grammar.size() - 1 - i].push_back(pair<string, string>(tokens[pos], "<" + tokens[pos + 1]));
 						else
-							first[grammar.size() - 1 - i].push_back(pair<string, string>(tokens[pos], "e" ));
+							first[grammar.size() - 1 - i].push_back(pair<string, string>(tokens[pos], "&" ));
 						break;
 					}
 
@@ -85,16 +90,30 @@ vector<vector<pair<string, string>>> firsts(vector<vector<string>>  grammar) {
 	}
 	for (auto &vect : first) {
 		for (auto i = 1; i < vect.size(); i++) {
-			if (vect[i].first.front() == '<'&&vect[i].second == "e")
-				for (auto expr : first) {
-					if (expr.begin()->first == vect[i].first) {
-						vect.erase(vect.begin() + i);
-						for (int j = 1; j < expr.size(); j++) {
-							if(!find(vect, expr[j].first))
-								vect.push_back(pair<string, string>(expr[j].first, expr.begin()->first));
+			if (vect[i].first.front() == '<' && vect[i].second == "&") {
+				tokens = split(vect[i].first, "<");
+				tokens.erase(tokens.begin());
+				int pos = 0;
+				bool empty_flag = false;
+				do {
+					for (auto expr : first) {
+						if (expr.begin()->first == "<"+tokens[pos]) {
+							vect.erase(vect.begin() + i);
+							for (int j = 1; j < expr.size(); j++) {
+								if (expr[j].first == "e")
+									empty_flag = true;
+								if (!find(vect, expr[j].first))
+									vect.push_back(pair<string, string>(expr[j].first, expr.begin()->first));
+							}
+							if (empty_flag) {
+								pos++;
+							}
+							else
+								break;
 						}
 					}
-				}
+				} while (pos != tokens.size());
+			}
 		}
 	}
 
