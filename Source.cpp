@@ -125,7 +125,7 @@ vector<vector<pair<string, string>>> follows(vector<vector<string>>  grammar, ve
 	vector<vector<pair<string, string>>> follow;
 	follow.push_back(vector <pair<string, string>>());
 	follow[0].push_back(pair<string, string>(grammar[0][0], ""));
-	follow[0].push_back(pair<string, string>("$", "e"));
+	follow[0].push_back(pair<string, string>("$", "&"));
 
 	for (auto &elem : grammar) {
 		for (int i = 1; i < elem.size(); i++) {
@@ -166,15 +166,9 @@ vector<vector<pair<string, string>>> follows(vector<vector<string>>  grammar, ve
 
 	}
 
-
-	bool find_flag;
-	do {
-		find_flag = false;
-
 		for (auto &vect : follow) {
 			for (int i = 1; i < vect.size(); i++) {
 				if (vect[i].second == "follow") {
-					find_flag = true;
 					for (auto elem : follow) {
 						if (elem[0].first == vect[i].first) {
 							vect.erase(vect.begin() + i);
@@ -182,12 +176,13 @@ vector<vector<pair<string, string>>> follows(vector<vector<string>>  grammar, ve
 								if (!find(vect, elem[j].first))
 									vect.push_back(elem[j]);
 							}
+							i--;
+							break;
 						}
 					}
 				}
 			}
 		}
-	} while (find_flag);
 
 	for (auto &vect : follow) {
 		for (int i = 1; i < vect.size(); i++) {
