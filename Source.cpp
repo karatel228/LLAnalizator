@@ -191,7 +191,7 @@ vector<vector<pair<string, string>>> follows(vector<vector<string>>  grammar, ve
 					if (first.begin()->first == vect[i].first) {
 						for (int k = 1; k < first.size(); k++) {
 							if (!find(vect, first[k].first) && first[k].first!="e")
-								vect.push_back(first[k]);
+								vect.push_back(pair<string, string>(first[k].first, vect[i].first));
 						}
 						if (find(first, "e")) {
 							for (auto fol : follow) {
