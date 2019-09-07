@@ -306,11 +306,18 @@ int main() {
 
 	}
 
+	cout << "GRAMMAR" << endl;
+	for (int i = 0; i < grammar.size(); i++)
+	{
+		cout << grammar[i];
+		cout << endl;
+	}
+
 	vector<vector<pair<string, string>>> first = firsts(gramm);
 
 	vector<vector<pair<string, string>>> follow = follows(gramm, first);
 
-
+	cout << "==============================================================================================================================" << endl;
 	cout << "FIRSTS" << endl;
 	for (int i = 0; i < first.size(); i++)
 	{
@@ -329,6 +336,7 @@ int main() {
 		cout << endl;
 	}
 
+	cout << "==============================================================================================================================" << endl;
 	cout << "Enter expression to check. At the end press Enter: ";
 	cin >> expression;
 	expression += "$";
