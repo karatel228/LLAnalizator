@@ -289,19 +289,14 @@ int main() {
 
 
 	vector<vector<string>> gramm;
-	regex re("(<.*?>)");
-	smatch match;
-
 	vector<string> tokens;
 
 	for (int i = 0; i < grammar.size(); i++) {
 
 		gramm.push_back(vector<string>());
-		regex_search(grammar[i], match, re);
-		gramm[i].push_back(match.str(1));
-		string right_side = match.suffix();
-		right_side.erase(0, 3);
-		tokens = split(right_side, "|");
+		tokens = split(grammar[i], "::=");
+		gramm[i].push_back(tokens[0]);
+		tokens = split(tokens[1], "|");
 		gramm[i].insert(gramm[i].end(), tokens.begin(), tokens.end());
 
 	}
