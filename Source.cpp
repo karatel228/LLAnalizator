@@ -46,11 +46,11 @@ vector<vector<pair<string, string>>> firsts(vector<vector<string>>  grammar) {
 	
 	for (int i = grammar.size() - 1; i >= 0; i--) {
 		first.push_back(vector < pair<string, string>>());
-		first[grammar.size() - 1 - i].push_back(pair<string, string>(grammar[i][0], ""));
+		first.back().push_back(pair<string, string>(grammar[i][0], ""));
 		for (int j = 1; j < grammar[i].size(); j++) {
 			tokens = split(grammar[i][j], "<");
 			if (tokens.size() == 1) {
-				first[grammar.size() - 1 - i].push_back(pair<string, string>(tokens[0], "&"));
+				first.back().push_back(pair<string, string>(tokens[0], "&"));
 				continue;
 			}	
 			else {
@@ -70,7 +70,7 @@ vector<vector<pair<string, string>>> firsts(vector<vector<string>>  grammar) {
 			}
 			
 			if (tokens.size() != 1 && tokens[0].front() != '<') 
-				first[grammar.size() - 1 - i].push_back(pair<string, string>(tokens[0],  tokens[1]));			
+				first.back().push_back(pair<string, string>(tokens[0],  tokens[1]));			
 
 			else {
 				int pos = 0;
@@ -83,8 +83,8 @@ vector<vector<pair<string, string>>> firsts(vector<vector<string>>  grammar) {
 								for (int k = 1; k < first[z].size(); k++) {
 									if (first[z][k].first == "e")
 										empty_flag = true;
-									if (find(first[grammar.size() - 1 - i], first[z][k].first)==-1)
-										first[grammar.size() - 1 - i].push_back(pair<string, string>(first[z][k].first, tokens[pos]));
+									if (find(first.back(), first[z][k].first)==-1)
+										first.back().push_back(pair<string, string>(first[z][k].first, tokens[pos]));
 								}
 								break;
 							}
@@ -93,7 +93,7 @@ vector<vector<pair<string, string>>> firsts(vector<vector<string>>  grammar) {
 								for (int p = pos + 1; p < tokens.size(); p++) {
 									buffer +=tokens[p];
 								}
-								first[grammar.size() - 1 - i].push_back(pair<string, string>(buffer, "&"));
+								first.back().push_back(pair<string, string>(buffer, "&"));
 							}
 						}
 						if (empty_flag) {
@@ -104,9 +104,9 @@ vector<vector<pair<string, string>>> firsts(vector<vector<string>>  grammar) {
 					}
 					else {
 						if (pos + 1 != tokens.size())
-							first[grammar.size() - 1 - i].push_back(pair<string, string>(tokens[pos], tokens[pos + 1]));
+							first.back().push_back(pair<string, string>(tokens[pos], tokens[pos + 1]));
 						else
-							first[grammar.size() - 1 - i].push_back(pair<string, string>(tokens[pos], "&" ));
+							first.back().push_back(pair<string, string>(tokens[pos], "&" ));
 						break;
 					}
 
@@ -339,7 +339,6 @@ int main() {
 	vector<vector<string>> tree;
 	tree.push_back(vector<string>());
 	tree.back().push_back(current);
-	int iter = 1;
 	int cur_symbol = 0;
 	int term_pos = 0;
 
@@ -360,7 +359,7 @@ int main() {
 			if (current.find('<') == string::npos && current != "$") {
 				if (string(1, expression[cur_symbol]) == current) {
 					if (term_pos == tree.back().size()) {
-						if (find(follow[0], current)) {
+						if (find(follow[0], current)!=-1) {
 							fout << "String accepted";
 							fout.close();
 							return 1;
@@ -387,7 +386,7 @@ int main() {
 
 			if (expression[cur_symbol] == '$' && current == tree.back().back()) {
 				production = find_vector(follow, current);
-				if (find(production, string(1, expression[cur_symbol]))) {
+				if (find(production, string(1, expression[cur_symbol]))!=-1) {
 					tree.back().erase(tree.back().end() - 1);
 					for (auto str : tree.back()) {
 						fout << str;
@@ -470,10 +469,10 @@ int main() {
 								if (i!=0 && tree[j][i - 1].front() == '<') {
 									production = find_vector(follow, tree[j][i - 1]);
 									if (find(production, string(1, expression[cur_symbol]))) {
-										for (int i = 0; i < tree.back().size(); i++) {
-											if (tree.back()[i] == current) {
-												tree.back().erase(tree.back().begin() + i);
-												current = tree.back()[i];
+										for (int k = 0; k < tree.back().size(); k++) {
+											if (tree.back()[k] == current) {
+												tree.back().erase(tree.back().begin() + k);
+												current = tree.back()[k];
 												brek_flag = 1;
 												break;
 											}
