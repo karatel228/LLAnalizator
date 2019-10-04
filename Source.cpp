@@ -278,35 +278,104 @@ vector<vector<pair<string, string>>> follows(vector<vector<string>>  grammar, ve
 
 }
 
-void print_tree(tree* initial, ostream& out) {
+vector<vector<string>> print_tree(tree* initial) {
 
-	out << initial->production;
+	vector <vector<string>> output;
+	output.push_back(vector<string>());
+	output.back().push_back(initial->production);
+	output.push_back(vector<string>());
 	struct tree* current = new tree;
-	current = initial;
+	current = initial->chosen[0];
+	int line = 0;
+	int terminals = 0;
+	int length_max = 0;
 
 	while (1) {
-		for (auto child : current->chosen) {
-			out << child->production << "   ";
+		int pos = 0;
+		line++;
+		int length = 0;
+		int length_cur = 0;
+		output[line].push_back(current->production);
+		output[line].push_back(" ");
+		for (auto elem : output[line]) {
+			if (elem == "")
+				length_cur += 1;
+			else
+				length_cur += elem.length();
 		}
-
-		if (current->parent != NULL) {
+		if (length_cur > length_max)
+			length_max = length_cur;
+		for (int j = 0; j < line; j++) {
+			length = 0;
+			for(auto elem : output[j]) {
+				if (elem == "")
+				length += 1;
+				else
+				length += elem.length();
+			}
+			if (length < length_max) {
+				for (int i = 0; i < length_max - length; i++) { 
+					output[j].push_back(" ");
+				} 
+			}
+		}
+		if (current->production.front() != '<') {
+			int start = line ;
+			if (current->parent->chosen.size() > 1) {
+				start = line + 1;
+			}
+			else
+				length_cur = length_max;
+			for (int j = start; j < output.size(); j++) {
+				length = 0;
+				for (auto elem : output[j]) {
+					length += elem.length();
+				}
+				for (int i = 0; i < length_cur - length; i++)
+				{
+					output[j].push_back(" ");
+				}
+			}
 			for (int i = 0; i < current->parent->chosen.size(); i++) {
 				if (current->parent->chosen[i] == current) {
-					if (i != current->parent->chosen.size() - 1)
-						current = current->parent->chosen[i + 1];
-					else
-						current = current->parent->chosen[0]->chosen[0];
-					break;
+					if (i != current->parent->chosen.size() - 1) {
+						pos = i + 1;
+						current = current->parent;
+						line = line--;
+						break;
+					}
+					else {
+						current = current->parent;
+						if (current == initial) {
+							return output;
+						}
+						line--;
+						i = -1;
+						continue;
+					}
+
 				}
 			}
 		}
-		else
-			current = current->chosen[0];
+		current = current->chosen[pos];
+		if (line == output.size() - 1) {
+			output.push_back(vector<string>());
+			if (output[line].front() == "" || output[line].front().front() != '<') {
+				length = 0;
+				for (int i = 0; i < output[line].size() - 2; i++) {
+					length += output[line][i].length();
+				}
+				for (int i = 0; i < length; i++) {
+					output.back().push_back(" ");
+				}
+			}	
+		}
+			
 	}
-	
-	
-
+			
 }
+	
+	
 
 
 
@@ -332,7 +401,7 @@ int main() {
 	vector<vector<string>> gramm;
 	vector<string> tokens;
 	vector<tree*> syntax_tree;
-	struct tree* root = new tree;;
+	struct tree* root = new tree;
 
 	for (int i = 0; i < grammar.size(); i++) {
 
@@ -362,18 +431,15 @@ int main() {
 			vector<string> children = split(token, "<");
 
 			for (string child : children) {
+				struct tree* buff = new tree;
+				buff = init(child);
+				buff->parent = current;
 				if (child.front() != '<') {
-					struct tree* buff = new tree;
-					buff = init(child);
-					buff->parent = current;
 					current->child.back().push_back(buff);
 					continue;
 				}
 				for (auto leaf : syntax_tree) {
-					struct tree* buff = new tree;
 					if (leaf->production == child) {
-						buff = init(leaf->production);
-						buff->parent = current;
 						for (auto alternat : leaf->child) {
 							buff->child.push_back(vector<tree*>());
 							for (auto elem : alternat) {
@@ -387,8 +453,6 @@ int main() {
 						break;
 					}
 					if (syntax_tree.back() == leaf && leaf->production != child) {
-						buff = init(child);
-						buff->parent = current;
 						current->child.back().push_back(buff);
 						syntax_tree.push_back(buff);
 					}
@@ -397,13 +461,6 @@ int main() {
 				}
 			}
 
-
-		}
-
-		for (auto leaf : syntax_tree) {
-			if (leaf->production == gramm[i].front()) {
-				leaf->child = current->child;
-			}
 
 		}
 
@@ -530,6 +587,7 @@ int main() {
 					struct tree* terminal = new tree;
 					terminal = init(set[ind].first);
 					current->chosen.push_back(terminal);
+					terminal->parent = current;
 					/*fout << current->production << "-";
 					for (auto leaf : current->chosen) {
 						fout << leaf->production;
@@ -578,6 +636,12 @@ int main() {
 								return 0;
 							}
 						}
+						if (current->chosen.size() == 0) {
+							struct tree* terminal = new tree;
+							terminal = init("e");
+							current->chosen.push_back(terminal);
+							terminal->parent = current;
+						}
 						if (i != current->parent->chosen.size() - 1)
 							current = current->parent->chosen[i + 1];
 						else {
@@ -585,11 +649,11 @@ int main() {
 								current = current->parent;
 								set = find_vector(follow, current->production);
 								if (find(set, string(1, expression[pos])) != -1) {
-									fout << root->production;
+									/*fout << root->production;
 									struct tree* current_1 = new tree;
-									current_1 = root;
+									current_1 = root;*/
 
-									while (1) {
+									/*while (1) {
 										for (auto child : current_1->chosen) {
 											fout << child->production << "   ";
 										}
@@ -611,13 +675,18 @@ int main() {
 										else {
 											current_1 = current_1->chosen[0];
 											fout << endl;
+										}	
+									}*/
+									vector<vector<string>> output_tree = print_tree(root);
+									for (auto line : output_tree) {
+										for (string production : line) {
+											fout << production;
 										}
-											
-										
+										fout << endl;
 									}
-									fout << "String accepted.";
+									fout<<"String accepted.";
 									return 1;
-								}
+								} 
 							}
 							current = current->parent;
 							for (int j = 0; j < current->parent->chosen.size(); j++) {
