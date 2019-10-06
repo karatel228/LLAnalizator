@@ -183,7 +183,7 @@ vector<vector<pair<string, string>>> follows(vector<vector<string>>  grammar, ve
 	vector<pair<string, string>> expr;
 	follow.push_back(vector <pair<string, string>>());
 	follow[0].push_back(pair<string, string>(grammar[0][0], ""));
-	follow[0].push_back(pair<string, string>("$", "&"));
+	follow[0].push_back(pair<string, string>("$", ""));
 
 	for (auto elem : grammar) {
 		for (int i = 1; i < elem.size(); i++) {
@@ -204,19 +204,8 @@ vector<vector<pair<string, string>>> follows(vector<vector<string>>  grammar, ve
 						}
 					}
 					if (j != tokens.size() - 1) {
-						if (tokens[j + 1].front() == '<') {
-							follow[pos].push_back(pair<string, string>(tokens[j + 1], "&"));
-						}
-						else {
-							if (j + 2 != tokens.size())
-								follow[pos].push_back(pair<string, string>(tokens[j + 1], tokens[j+2]));
-							else
-								follow[pos].push_back(pair<string, string>(tokens[j + 1], elem[0]));
-
-						}
-							
-					}
-						
+						follow[pos].push_back(pair<string, string>(tokens[j + 1], ""));		
+					}						
 					else
 						follow[pos].push_back(pair<string, string>(elem[0], "follow"));
 
@@ -233,7 +222,7 @@ vector<vector<pair<string, string>>> follows(vector<vector<string>>  grammar, ve
 				expr = find_vector(follow, vect[i].first);
 				for (int j = 1; j < expr.size(); j++) {
 					if (find(vect, expr[j].first) == -1)
-							vect.push_back(expr[j]);	
+						vect.push_back(expr[j]);	
 				}
 				vect.erase(vect.begin() + i);
 				i--;				
@@ -249,11 +238,10 @@ vector<vector<pair<string, string>>> follows(vector<vector<string>>  grammar, ve
 					if (first.begin()->first == vect[i].first) {
 						for (int k = 1; k < first.size(); k++) {
 							if (find(vect, first[k].first) == -1 && first[k].first != "e") {
-								vect.push_back(pair<string, string>(first[k].first, vect[i].first));
+								vect.push_back(pair<string, string>(first[k].first, ""));
 
 							}
-
-							}
+						}
 						if (find(first, "e") != -1) {
 							for (auto fol : follow) {
 								if (fol[0].first == vect[i].first)
@@ -262,6 +250,7 @@ vector<vector<pair<string, string>>> follows(vector<vector<string>>  grammar, ve
 										if (find(vect, fol[j].first) == -1)
 											vect.push_back(fol[j]);
 									}
+									break;
 								}
 							}
 
@@ -287,7 +276,6 @@ vector<vector<string>> print_tree(tree* initial) {
 	struct tree* current = new tree;
 	current = initial->chosen[0];
 	int line = 0;
-	int terminals = 0;
 	int length_max = 0;
 
 	while (1) {
@@ -298,19 +286,13 @@ vector<vector<string>> print_tree(tree* initial) {
 		output[line].push_back(current->production);
 		output[line].push_back(" ");
 		for (auto elem : output[line]) {
-			if (elem == "")
-				length_cur += 1;
-			else
-				length_cur += elem.length();
+			length_cur += elem.length();
 		}
 		if (length_cur > length_max)
 			length_max = length_cur;
 		for (int j = 0; j < line; j++) {
 			length = 0;
 			for(auto elem : output[j]) {
-				if (elem == "")
-				length += 1;
-				else
 				length += elem.length();
 			}
 			if (length < length_max) {
@@ -360,7 +342,7 @@ vector<vector<string>> print_tree(tree* initial) {
 		current = current->chosen[pos];
 		if (line == output.size() - 1) {
 			output.push_back(vector<string>());
-			if (output[line].front() == "" || output[line].front().front() != '<') {
+			if (output[line].front() == " " || output[line].front().front() != '<') {
 				length = 0;
 				for (int i = 0; i < output[line].size() - 2; i++) {
 					length += output[line][i].length();
@@ -478,39 +460,40 @@ int main() {
 		cout << endl;
 	}
 
+	ofstream fout("output.txt");
+	if (fout.is_open()) {
 
-
-	cout << "GRAMMAR" << endl;
+	fout << "GRAMMAR" << endl;
 	for (int i = 0; i < grammar.size(); i++)
 	{
-		cout << grammar[i];
-		cout << endl;
+		fout << grammar[i];
+		fout << endl;
 	}
 
 	vector<vector<pair<string, string>>> first = firsts(gramm);
 
 	vector<vector<pair<string, string>>> follow = follows(gramm, first);
 
-	cout << "==============================================================================================================================" << endl;
-	cout << "FIRSTS" << endl;
+	fout << "==============================================================================================================================" << endl;
+	fout << "FIRSTS" << endl;
 	for (int i = 0; i < first.size(); i++)
 	{
 		for (auto& it : first[i]) {
-			cout << "(" << it.first << "," << it.second << ")";
+			fout << "(" << it.first << "," << it.second << ")";
 		}
-		cout << endl;
+		fout << endl;
 	}
-	cout << "==============================================================================================================================" << endl;
-	cout << "FOLLOWS" << endl;
+	fout << "==============================================================================================================================" << endl;
+	fout << "FOLLOWS" << endl;
 	for (int i = 0; i < follow.size(); i++)
 	{
 		for (auto& it : follow[i]) {
-			cout << "(" << it.first << "," << it.second << ")";
+			fout << "(" << it.first << "," << it.second << ")";
 		}
-		cout << endl;
+		fout << endl;
 	}
 
-	cout << "==============================================================================================================================" << endl;
+	fout << "==============================================================================================================================" << endl;
 
 	myfile.open("expression.txt");
 	string expression;
@@ -529,8 +512,7 @@ int main() {
 	int pos = 0;
 	int ind = 0;
 
-	ofstream fout("output.txt");
-	if (fout.is_open()) {
+	
 		while (1) {
 
 			if (current->production == string(1, expression[pos])) {
@@ -562,7 +544,6 @@ int main() {
 						}
 					}
 				}
-				continue;
 			}
 
 			if (current->child.empty()) {
