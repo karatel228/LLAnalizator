@@ -12,7 +12,7 @@ struct tree
 {
 	string production;
 	struct tree* parent;
-	vector<vector<tree*>> child;
+	vector<string> children;
 	vector<tree*> chosen;
 };
 
@@ -269,66 +269,18 @@ vector<vector<pair<string, string>>> follows(vector<vector<string>>  grammar, ve
 
 vector<tree*> build_table(vector<vector<string>>  grammar) {
 	vector<tree*> syntax_tree;
-	struct tree* root = new tree;
 	struct tree* current = new tree;
 
 	for (int i = 0; i < grammar.size(); i++) {
-		
-		if (i == 0) {
-			root = init(grammar[i].front());
-			syntax_tree.push_back(root);
-			current = root;
-		}
-		else {
-			for (auto leaf : syntax_tree) {
-				if (leaf->production == grammar[i].front()) {
-					current = leaf;
-					break;
-				}
-
-			}
-		}
+	
+		current = init(grammar[i].front());
 		for (int j = 1; j < grammar[i].size(); j++) {
-			current->child.push_back(vector<tree*>());
-			vector<string> children = split(grammar[i][j], "<");
-
-			for (string child : children) {
-				struct tree* buff = new tree;
-				buff = init(child);
-				buff->parent = current;
-				if (child.front() != '<') {
-					current->child.back().push_back(buff);
-					continue;
-				}
-				for (auto leaf : syntax_tree) {
-					if (leaf->production == child) {
-						for (auto alternat : leaf->child) {
-							buff->child.push_back(vector<tree*>());
-							for (auto elem : alternat) {
-								struct tree* new_child = new tree;
-								new_child = init(elem->production);
-								new_child->parent = buff;
-								buff->child.back().push_back(new_child);
-							}
-						}
-						current->child.back().push_back(buff);
-						break;
-					}
-					if (syntax_tree.back() == leaf && leaf->production != child) {
-						current->child.back().push_back(buff);
-						syntax_tree.push_back(buff);
-					}
-
-
-				}
-			}
-
-
+			current->children.push_back(grammar[i][j]);
 		}
+		syntax_tree.push_back(current);
 	}
 
 	return syntax_tree;
-	
 
 }
 
@@ -460,137 +412,128 @@ int main() {
 			if (gramm.size() == 0 || gramm.back().size() != 1) {
 				gramm.push_back(vector<string>());
 				gramm[i].push_back(tokens[0]);
-			}	
+			}
 			tokens = split(tokens[1], "|");
 			for (int j = 0; j < tokens.size(); j++) {
 				vector<string> elements = split(tokens[j], "<");
 				right_side.push_back(elements);
 			}
+			string rule = "";
 			for (int j = 0; j < right_side.size(); j++) {
-				if (right_side[j].front() == gramm[i].front())
-					right_side[j].push_back("LR");
+				if (right_side[j].front() == gramm[i].front()) {
+					right_side[j].push_back(gramm[i].front());
+					right_side[j].back().erase(right_side[j].back().size() - 1);
+					right_side[j].back() += "'>";
+					right_side[j].erase(right_side[j].begin());
+					for (int z = 0; z < right_side[j].size(); z++) {
+						rule += right_side[j][z];
+					}
+					rule += "|";
+					right_side.erase(right_side.begin() + j);
+					j--;
+				}
+			}
+
+			if (rule != "") {
+				gramm.push_back(vector<string>());
+				gramm.back().push_back(gramm[i].front());
+				gramm.back().back().erase(gramm.back().back().size() - 1);
+				gramm.back().back() += "'>";
+				rule += "e";
+				for (auto &alternate : right_side) {
+					alternate.push_back(gramm.back().front());
+
+				}
+				fout << "Production " << gramm[i].front() << " has left recursion. Fixed production:" << endl;
+				fout << gramm[i].front() <<"::=";
+				for (int z = 0; z < right_side.size(); z++) {
+					for (int k = 0; k < right_side[z].size(); k++) {
+							fout << right_side[z][k];
+					}
+					if (z != right_side.size() - 1)
+						fout << "|";
+				}
+				fout << endl;
+				rule.insert(0, gramm.back().front() + "::=");
+				grammar.insert(grammar.begin() + i + (gramm.size() - 1-i), rule);
+				rule.clear();
+			}
+
+			for (int j = 0; j < right_side.size(); j++) {
 				for (int z = j + 1; z < right_side.size(); z++) {
 					if (right_side[j].front() == right_side[z].front()) {
-						if (right_side[j].back() != "I")
-							right_side[j].push_back("I");
-						right_side[z].push_back("I");
-					}
-				}
-				if (right_side[j].back() == "LR" || right_side[j].size()>1 && right_side[j][right_side[j].size() - 2] == "LR") {
-					string rule = gramm.back().front();
-					rule.erase(rule.end() - 1);
-					rule += "'>";
-					gramm.push_back(vector<string>());
-					gramm.back().push_back(rule);
-					rule += "::=";
-					for (int z = j; z < right_side.size(); z++) {
-						if (right_side[z].back() == "I" || z==j) {
-							if (right_side[z].back() == "I" && z == j)
-								right_side[z].erase(right_side[z].end() - 2, right_side[z].end());
-							else
-								right_side[z].erase(right_side[z].end() - 1);
-							right_side[z].push_back(gramm.back().front());
-							right_side[z].erase(right_side[z].begin());
-							for (int k = 0; k < right_side[z].size(); k++) {
-								rule += right_side[z][k];
-							}
-							rule += "|";
-							right_side[z].push_back("I");
-							/*right_side.erase(right_side.begin() + z);
-							if (z == j)
-								j--;
-							z--;*/
+						if (rule=="") {
+							right_side.push_back(vector<string>());
+							right_side.back().push_back(right_side[j].front());
+							right_side.back().push_back(gramm.back().front());
+							right_side.back().back().erase(right_side.back().back().size() - 1);
+							right_side.back().back() += "'>";
+							gramm.push_back(vector<string>());
+							gramm.back().push_back(right_side.back().back());
 						}
-						
-					}
-					
-					for (int z = 0; z < right_side.size(); z++) {
-						if (z < j) {
-							gramm[i].erase(gramm[i].begin() + z + 1);
+						if (right_side[z].back() == gramm.back().front()) {
+							break;
 						}
-						if (right_side[z].back() != "I") {
-
-							right_side[z].push_back(gramm.back().front());
-						}
+						right_side[z].erase(right_side[z].begin());
+						if (right_side[z].size() == 0)
+							rule += "e";
 						else {
-							right_side.erase(right_side.begin() + z);
-							if(z==j&&j!=0)
-								j--;
-							z--;
-						}
-						
-
-					}
-
-					fout << "Production " << gramm[i].front() << " has left recursion." << endl;
-					rule += "e";
-					grammar.insert(grammar.begin() + i + 1, rule);
-				}
-				if (right_side[j].back() == "I") {
-					string rule = gramm.back().front();
-					rule.erase(rule.end() - 1);
-					rule += "'>";
-					gramm.push_back(vector<string>());
-					gramm.back().push_back(rule);
-					rule += "::=";
-					gramm[i].push_back(right_side[j].front() + gramm.back().front());
-					for (int z = j; z < right_side.size(); z++) {
-						if (right_side[z].back() == "I") {
-							right_side[z].erase(right_side[z].end() - 1);
-							right_side[z].erase(right_side[z].begin());
-							if (right_side[z].size() == 0)
-								rule += "e";
-							else {
-								for (string elem : right_side[z]) {
-									rule += elem;
-								}
+							for (string token : right_side[z]) {
+								rule += token;
 							}
-							if (z != right_side.size() - 1)
-								rule += "|";
-							right_side.erase(right_side.begin() + z);
-							z--;
 						}
-
+						rule += "|";
+						right_side.erase(right_side.begin() + z);
+						z--;
 					}
-					grammar.insert(grammar.begin() + i + 1, rule);
-
-
 				}
-				else {
-					gramm[i].push_back("");
+				if (rule != "") {
+					right_side[j].erase(right_side[j].begin());
+					if (right_side[j].size() == 0)
+						rule.insert(0, "e|");
+					else
+						rule.insert(0, "|");
 					for (int z = 0; z < right_side[j].size(); z++) {
-						gramm[i].back() += right_side[j][z];
+						rule.insert(z, right_side[j][z]);
 					}
-				}
-				if (j == right_side.size()-1  && i!=gramm.size()-1) {
+					right_side.erase(right_side.begin() + j);
+					rule.erase(rule.size() - 1);
+					rule.insert(0, gramm.back().front() + "::=");
+					grammar.insert(grammar.begin() + i + (grammar.size() - i-1), rule);
 					fout << "Production " << gramm[i].front() << " does not fulfill I grammatical rule. Applying left-factoring and rewriting production:" << endl;
-					fout << gramm[i].front() << "::=";
-					tokens.clear();
-					for (int z = 1; z < gramm[i].size(); z++) {
-						tokens.push_back(gramm[i][z]);
-						fout << gramm[i][z];
-						if (z != gramm[i].size() - 1)
+					fout << gramm[i].front() + "::=";
+					for (int z = 0; z < right_side.size(); z++) {
+						for (int k = 0; k < right_side[z].size(); k++) {
+							fout << right_side[z][k];
+						}
+						if (z != right_side.size() - 1)
 							fout << "|";
 					}
 					fout << endl;
+					
 				}
 			}
-
+			for (auto line : right_side) {
+				gramm[i].push_back("");
+				for (string token : line) {
+					gramm[i].back() += token;
+				}
+			}
 		}
+	
 
 		vector<tree*> syntax_tree = build_table(gramm);
 
-		for (int i = 0; i < syntax_tree.size(); i++)
+		/*for (int i = 0; i < syntax_tree.size(); i++)
 		{
 			cout << syntax_tree[i]->production << endl;
-			for (auto altern : syntax_tree[i]->child) {
-				for (auto leaf : altern) {
-					cout << leaf->production << "";
-				}
+			for (auto altern : syntax_tree[i]->children) {
+					cout << altern->production << "";
+				
 				cout << endl;
 			}
 			cout << endl;
-		}
+		}*/
 
 
 		vector<vector<pair<string, string>>> first = firsts(gramm);
@@ -683,69 +626,69 @@ int main() {
 					}
 				}
 			}
-
-			if (current->child.empty()) {
-				for (auto leaf : syntax_tree) {
-					if (leaf->production == current->production) {
-						for (auto alternative : leaf->child) {
-							current->child.push_back(vector<tree*>());
-							for (auto nonterm : alternative) {
-								struct tree* buff = new tree;
-								buff = init(nonterm->production);
-								buff->parent = current;
-								current->child.back().push_back(buff);
-							}
-						}
-						break;
-					}
-				}
-			}
 			vector<pair<string, string>> set = find_vector(first, current->production);
 			if ((ind = find(set, string(1, expression[pos]))) != -1) {
 				if (set[ind].second == "&") {
-					struct tree* terminal = new tree;
-					terminal = init(set[ind].first);
-					current->chosen.push_back(terminal);
-					terminal->parent = current;
-					/*fout << current->production << "-";
-					for (auto leaf : current->chosen) {
-						fout << leaf->production;
-					}
-					fout << endl;*/
+					struct tree* buff = new tree;
+					buff = init(string(1, expression[pos]));
+					buff->parent = current;
+					current->chosen.push_back(buff);
 					pos++;
-					for (int i = 0; i < current->parent->chosen.size(); i++) {
-						if (current->parent->chosen[i] == current) {
-							if (i != current->parent->chosen.size() - 1) {
-								current = current->parent->chosen[i + 1];
-
+					for (int j = 0; j < current->parent->chosen.size(); j++) {
+						if (current->parent->chosen[j]->production == current->production) {
+							if (j != current->parent->chosen.size() - 1) {
+								current = current->parent->chosen[j + 1];
 								break;
 							}
 							else {
-								current = current->parent;
-								i = -1;
-								continue;
+								if (current->parent == root)
+									break;
+								else {
+									current = current->parent;
+									j = -1;
+									continue;
+								}
 							}
 						}
 					}
 					continue;
 				}
-				for (auto alternative : current->child) {
-					if (alternative.front()->production == set[ind].second || alternative.front()->production == set[ind].first) {
-						current->chosen = alternative;
-						/*fout << current->production << "-";
-						for (auto leaf : current->chosen) {
-							fout << leaf->production;
+				for (auto child : current->children) {
+					if (child.find(set[ind].second) != string::npos) {
+						if (child[0] == expression[pos] || child.find(set[ind].second) == 0) {
+							vector<string> tokens = split(child, "<");
+							for (auto token : tokens) {
+								if (token.front() != '<') {
+									struct tree* buff = new tree;
+									buff = init(token);
+									buff->parent = current;
+									current->chosen.push_back(buff);
+									continue;
+								}
+								for (auto leaf : syntax_tree) {
+									if (leaf->production == token) {
+										if (leaf->chosen.size()==0 && leaf->parent==NULL) {
+											current->chosen.push_back(leaf);
+											leaf->parent = current;
+										}
+										else {
+											struct tree* buff = new tree;
+											buff = init(leaf->production);
+											buff->children.insert(buff->children.begin(), leaf->children.begin(), leaf->children.end());
+											buff->parent = current;
+											current->chosen.push_back(buff);
+										}
+										break;
+									}
+								}
+							}
 						}
-
-						<< endl;*/
-						alternative.front()->parent = current;
-						current = alternative.front();
-						break;
 					}
 				}
+				current = current->chosen.front();
 			}
 
-			else if (find(set, "e") != -1) {
+			else if (find(set, "e")!=-1){
 				for (int i = 0; i < current->parent->chosen.size(); i++) {
 					if (current->parent->chosen[i] == current) {
 						if (i != 0) {
@@ -768,34 +711,6 @@ int main() {
 								current = current->parent;
 								set = find_vector(follow, current->production);
 								if (find(set, string(1, expression[pos])) != -1) {
-									/*fout << root->production;
-									struct tree* current_1 = new tree;
-									current_1 = root;*/
-
-									/*while (1) {
-										for (auto child : current_1->chosen) {
-											fout << child->production << "   ";
-										}
-
-										if (current_1->parent != NULL) {
-											for (int i = 0; i < current_1->parent->chosen.size(); i++) {
-												if (current_1->parent->chosen[i] == current_1) {
-													if (i != current_1->parent->chosen.size() - 1)
-														current_1 = current_1->parent->chosen[i + 1];
-													else {
-														current_1 = current_1->parent->chosen[0]->chosen[0];
-														fout << endl;
-													}
-
-													break;
-												}
-											}
-										}
-										else {
-											current_1 = current_1->chosen[0];
-											fout << endl;
-										}
-									}*/
 									vector<vector<string>> output_tree = print_tree(root);
 									for (auto line : output_tree) {
 										for (string production : line) {
@@ -827,6 +742,7 @@ int main() {
 							}
 						}
 						break;
+\
 					}
 				}
 			}
@@ -836,28 +752,10 @@ int main() {
 				return 0;
 			}
 		}
-	}
-
-}
 
 
-	
-
-
+	}							
 						
-
-
-	
-	/*else {
-		cout << "Unable to open file.";
-		return 0;
-	}
-
-	
-	tree* curr = new tree;
-	curr = syntax_tree;*/
-
-	
-	
+}
 
 
