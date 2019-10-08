@@ -466,7 +466,7 @@ int main() {
 							right_side.push_back(vector<string>());
 							right_side.back().push_back(right_side[j].front());
 							right_side.back().push_back(gramm.back().front());
-							right_side.back().back().erase(right_side.back().back().size() - 1);
+							right_side.back().back().erase(right_side.back().back().end());
 							right_side.back().back() += "'>";
 							gramm.push_back(vector<string>());
 							gramm.back().push_back(right_side.back().back());
