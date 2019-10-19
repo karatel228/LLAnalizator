@@ -25,14 +25,7 @@ struct tree* init(string a)
 	return(lst);
 }
 
-struct tree* addelem(tree* lst, string production)
-{
-	struct tree* temp = new tree;
-	temp->production = production; // сохранение поля данных добавляемого узла
-	temp->parent = lst; 
-	return(temp);
-}
-vector<string> split(string str, string delimiter) {
+vector<string> split(string str, const string& delimiter) {
 	size_t pos = 0;
 	string token;
 	vector<string> tokens;
@@ -62,7 +55,8 @@ vector<string> split(string str, string delimiter) {
 	return tokens;
 }
 
-int find(vector<pair<string, string>> vect, string symbol) {
+int find(vector<pair<string, string>>& vect, const string& symbol) {
+
 	for (int i = 0; i < vect.size(); i++) {
 		if (vect[i].first == symbol)
 			return i;
@@ -70,17 +64,8 @@ int find(vector<pair<string, string>> vect, string symbol) {
 	return -1;
 }
 
-vector<pair<string, string>> findAll(vector<pair<string, string>> vect, string symbol) {
-	vector<pair<string, string>> finded;
-	for (int i = 0; i < vect.size(); i++) {
-		if (vect[i].first == symbol)
-			finded.push_back(vect[i]);
-	}
 
-	return finded;
-}
-
-vector<pair<string, string>> find_vector(vector<vector<pair<string, string>>> table, string non_term) {
+vector<pair<string, string>> find_vector(vector<vector<pair<string, string>>>& table, string& non_term) {
 	for (auto vect : table) {
 		if (vect.begin()->first == non_term)
 			return vect;
@@ -90,7 +75,7 @@ vector<pair<string, string>> find_vector(vector<vector<pair<string, string>>> ta
 }
 
 
-vector<vector<pair<string, string>>> firsts(vector<vector<string>>  grammar) {
+vector<vector<pair<string, string>>> firsts(vector<vector<string>>&  grammar) {
 	vector<vector<pair<string, string>>> first;
 	vector<string> tokens;
 	vector<pair<string, string>> expr;
@@ -178,14 +163,14 @@ vector<vector<pair<string, string>>> firsts(vector<vector<string>>  grammar) {
 
 }
 
-vector<vector<pair<string, string>>> follows(vector<vector<string>>  grammar, vector<vector<pair<string, string>>> firsts) {
+vector<vector<pair<string, string>>> follows(vector<vector<string>>&  grammar, vector<vector<pair<string, string>>>& firsts) {
 	vector<vector<pair<string, string>>> follow;
 	vector<pair<string, string>> expr;
 	follow.push_back(vector <pair<string, string>>());
 	follow[0].push_back(pair<string, string>(grammar[0][0], ""));
 	follow[0].push_back(pair<string, string>("$", ""));
 
-	for (auto elem : grammar) {
+	for (auto& elem : grammar) {
 		for (int i = 1; i < elem.size(); i++) {
 			vector<string> tokens = split(elem[i], "<");
 			for (int j = 0; j < tokens.size(); j++) {
@@ -234,7 +219,7 @@ vector<vector<pair<string, string>>> follows(vector<vector<string>>  grammar, ve
 	for (auto& vect : follow) {
 		for (int i = 1; i < vect.size(); i++) {
 			if (vect[i].first.front() == '<') {
-				for (auto first : firsts) {
+				for (auto& first : firsts) {
 					if (first.begin()->first == vect[i].first) {
 						for (int k = 1; k < first.size(); k++) {
 							if (find(vect, first[k].first) == -1 && first[k].first != "e") {
@@ -243,7 +228,7 @@ vector<vector<pair<string, string>>> follows(vector<vector<string>>  grammar, ve
 							}
 						}
 						if (find(first, "e") != -1) {
-							for (auto fol : follow) {
+							for (auto& fol : follow) {
 								if (fol[0].first == vect[i].first)
 								{
 									for (int j = 1; j < fol.size(); j++) {
@@ -267,7 +252,7 @@ vector<vector<pair<string, string>>> follows(vector<vector<string>>  grammar, ve
 
 }
 
-vector<tree*> build_table(vector<vector<string>>  grammar) {
+vector<tree*> build_table(vector<vector<string>>&  grammar) {
 	vector<tree*> syntax_tree;
 	struct tree* current = new tree;
 
@@ -302,14 +287,14 @@ vector<vector<string>> print_tree(tree* initial) {
 		int length_cur = 0;
 		output[line].push_back(current->production);
 		output[line].push_back(" ");
-		for (auto elem : output[line]) {
+		for (auto& elem : output[line]) {
 			length_cur += elem.length();
 		}
 		if (length_cur > length_max)
 			length_max = length_cur;
 		for (int j = 0; j < line; j++) {
 			length = 0;
-			for(auto elem : output[j]) {
+			for(auto& elem : output[j]) {
 				length += elem.length();
 			}
 			if (length < length_max) {
@@ -327,7 +312,7 @@ vector<vector<string>> print_tree(tree* initial) {
 				length_cur = length_max;
 			for (int j = start; j < output.size(); j++) {
 				length = 0;
-				for (auto elem : output[j]) {
+				for (auto& elem : output[j]) {
 					length += elem.length();
 				}
 				for (int i = 0; i < length_cur - length; i++)
@@ -371,6 +356,8 @@ vector<vector<string>> print_tree(tree* initial) {
 		}
 			
 	}
+
+	delete current;
 			
 }
 	
@@ -411,7 +398,7 @@ int main() {
 
 			if (gramm.size() == 0 || gramm.back().size() != 1) {
 				gramm.push_back(vector<string>());
-				gramm[i].push_back(tokens[0]);
+				gramm.back().push_back(tokens[0]);
 			}
 			tokens = split(tokens[1], "|");
 			for (int j = 0; j < tokens.size(); j++) {
@@ -513,7 +500,7 @@ int main() {
 					
 				}
 			}
-			for (auto line : right_side) {
+			for (auto& line : right_side) {
 				gramm[i].push_back("");
 				for (string token : line) {
 					gramm[i].back() += token;
@@ -559,7 +546,7 @@ int main() {
 			fout << endl;
 		}
 
-		for (auto production : gramm) {
+		for (auto& production : gramm) {
 			vector<pair<string, string>> firsts = find_vector(first, production[0]);
 			vector<pair<string, string>> follows = find_vector(follow, production[0]);
 
@@ -653,11 +640,11 @@ int main() {
 					}
 					continue;
 				}
-				for (auto child : current->children) {
+				for (auto& child : current->children) {
 					if (child.find(set[ind].second) != string::npos) {
 						if (child[0] == expression[pos] || child.find(set[ind].second) == 0) {
 							vector<string> tokens = split(child, "<");
-							for (auto token : tokens) {
+							for (auto& token : tokens) {
 								if (token.front() != '<') {
 									struct tree* buff = new tree;
 									buff = init(token);
@@ -665,7 +652,7 @@ int main() {
 									current->chosen.push_back(buff);
 									continue;
 								}
-								for (auto leaf : syntax_tree) {
+								for (auto& leaf : syntax_tree) {
 									if (leaf->production == token) {
 										if (leaf->chosen.size()==0 && leaf->parent==NULL) {
 											current->chosen.push_back(leaf);
@@ -694,7 +681,7 @@ int main() {
 						if (i != 0) {
 							set = find_vector(follow, current->parent->chosen[i - 1]->production);
 							if (find(set, string(1, expression[pos])) == -1) {
-								fout << "Error. Character " << expression[pos] << " is not acceptable. Expression doesn't belong to grammar" << endl;
+								fout << "Error. Character " << expression[pos] << " is not acceptable. Expression doesn't belong to grammar1" << endl;
 								return 0;
 							}
 						}
@@ -712,8 +699,8 @@ int main() {
 								set = find_vector(follow, current->production);
 								if (find(set, string(1, expression[pos])) != -1) {
 									vector<vector<string>> output_tree = print_tree(root);
-									for (auto line : output_tree) {
-										for (string production : line) {
+									for (auto& line : output_tree) {
+										for (string& production : line) {
 											fout << production;
 										}
 										fout << endl;
@@ -742,13 +729,13 @@ int main() {
 							}
 						}
 						break;
-\
+
 					}
 				}
 			}
 
 			else {
-				fout << "Error. Character " << expression[pos] << " is not acceptable. Expression doesn't belong to grammar" << endl;
+				fout << "Error. Character " << expression[pos] << " is not acceptable. Expression doesn't belong to grammar2" << endl;
 				return 0;
 			}
 		}
