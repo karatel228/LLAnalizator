@@ -8,6 +8,8 @@
 
 using namespace std;
 
+
+
 struct tree
 {
 	string production;
@@ -16,7 +18,7 @@ struct tree
 	vector<tree*> chosen;
 };
 
-struct tree* init(string a)  
+struct tree* init_tree(string a)  
 {
 	struct tree* lst = new tree;
 	lst->parent = 0; 
@@ -25,11 +27,13 @@ struct tree* init(string a)
 	return(lst);
 }
 
+
+
+
 vector<string> split(string str, const string& delimiter) {
 	size_t pos = 0;
 	string token;
 	vector<string> tokens;
-	//str.erase(0, 3);
 	while ((pos = str.find(delimiter)) != string::npos) {
 		tokens.push_back(str.substr(0, pos));
 		str.erase(0, pos + delimiter.length());
@@ -258,7 +262,7 @@ vector<tree*> build_table(vector<vector<string>>&  grammar) {
 
 	for (int i = 0; i < grammar.size(); i++) {
 	
-		current = init(grammar[i].front());
+		current = init_tree(grammar[i].front());
 		for (int j = 1; j < grammar[i].size(); j++) {
 			current->children.push_back(grammar[i][j]);
 		}
@@ -370,19 +374,29 @@ vector<vector<string>> print_tree(tree* initial) {
 int main() {
 	string line;
 	ifstream myfile;
-	myfile.open("grammar.txt");
+	string path;
 	vector<string> grammar;
-	if (myfile.is_open())
-	{
-		while (getline(myfile, line))
+	cout << "Enter grammar description file path: ";
+	while (grammar.size()==0) {	
+		cin >> path;
+		myfile.open(path);
+		if (myfile.is_open())
 		{
-			grammar.push_back(line);
+			while (getline(myfile, line))
+			{
+				if (line.front() != '<') {
+					cout << "File does not contain a grammar description. Try again: ";
+					grammar.clear();
+					break;
+				}
+					
+				grammar.push_back(line);
+			}
+			myfile.close();
 		}
-		myfile.close();
+
+		else cout << "File not found. Try again: ";
 	}
-
-	else cout << "Unable to open file";
-
 
 	vector<vector<string>> gramm;
 	vector<string> tokens;
@@ -442,7 +456,7 @@ int main() {
 				}
 				fout << endl;
 				rule.insert(0, gramm.back().front() + "::=");
-				grammar.insert(grammar.begin() + i + (gramm.size() - 1-i), rule);
+				grammar.insert(grammar.begin() + gramm.size()-1, rule);
 				rule.clear();
 			}
 
@@ -453,7 +467,7 @@ int main() {
 							right_side.push_back(vector<string>());
 							right_side.back().push_back(right_side[j].front());
 							right_side.back().push_back(gramm.back().front());
-							right_side.back().back().erase(right_side.back().back().end());
+							right_side.back().back().erase(right_side.back().back().end()-1);
 							right_side.back().back() += "'>";
 							gramm.push_back(vector<string>());
 							gramm.back().push_back(right_side.back().back());
@@ -463,7 +477,7 @@ int main() {
 						}
 						right_side[z].erase(right_side[z].begin());
 						if (right_side[z].size() == 0)
-							rule += "e";
+							rule += "e|";
 						else {
 							for (string token : right_side[z]) {
 								rule += token;
@@ -486,8 +500,8 @@ int main() {
 					right_side.erase(right_side.begin() + j);
 					rule.erase(rule.size() - 1);
 					rule.insert(0, gramm.back().front() + "::=");
-					grammar.insert(grammar.begin() + i + (grammar.size() - i-1), rule);
-					fout << "Production " << gramm[i].front() << " does not fulfill I grammatical rule. Applying left-factoring and rewriting production:" << endl;
+					grammar.insert(grammar.begin() + gramm.size() - 1, rule);
+					fout << "Production " << gramm[gramm.size()-2].front() << " does not fulfill I grammatical rule. Applying left-factoring and rewriting production:" << endl;
 					fout << gramm[i].front() + "::=";
 					for (int z = 0; z < right_side.size(); z++) {
 						for (int k = 0; k < right_side[z].size(); k++) {
@@ -554,6 +568,7 @@ int main() {
 				if (find(follows, firsts[i].first) != -1) {
 					if (find(firsts, "e") != -1) {
 						fout << "Error. Production " << production[0] << " does not fulfull gramatical rule 2.";
+						fout.close();
 						return 0;
 					}
 				}
@@ -562,16 +577,21 @@ int main() {
 
 		fout << "==============================================================================================================================" << endl;
 
-		myfile.open("expression.txt");
+		path.clear();
 		string expression;
-		if (myfile.is_open())
-		{
-			getline(myfile, expression);
-			myfile.close();
+		cout << "Enter expression file path: ";
+		while (expression.length()== 0) {
+			cin >> path;
+			myfile.open(path);
+			if (myfile.is_open())
+			{
+				getline(myfile, expression);
+				myfile.close();
+			}
+
+			else cout << "File not found. Try again: ";
 		}
-		else cout << "Unable to open file";
-		/*cout << "Enter expression to check. At the end press Enter: ";
-		cin >> expression;*/
+
 		expression += "$";
 		struct tree* root = syntax_tree.front();
 		struct tree* current = new tree;
@@ -579,52 +599,42 @@ int main() {
 
 		int pos = 0;
 		int ind = 0;
+		int index = 0;
 
 
 		while (1) {
 
 			if (current->production == string(1, expression[pos])) {
 				pos++;
-				for (int i = 0; i < current->parent->chosen.size(); i++) {
-					if (current->parent->chosen[i] == current) {
-						if (i != current->parent->chosen.size() - 1) {
-							current = current->parent->chosen[i + 1];
+				while (true) {
+					if (current->parent->chosen[index] == current) {
+						if (index != current->parent->chosen.size() - 1) {
+							current = current->parent->chosen[index + 1];
 							break;
 						}
 
 						else {
 							current = current->parent;
-							for (int i = 0; i < current->parent->chosen.size(); i++) {
-								if (current->parent->chosen[i] == current) {
-									if (i != current->parent->chosen.size() - 1) {
-										current = current->parent->chosen[i + 1];
-
-										break;
-									}
-									else {
-										current = current->parent;
-										i = -1;
-										continue;
-									}
-								}
-							}
-
+							index = 0;
 						}
 					}
+					else
+						index++;
 				}
+				index = 0;
 			}
 			vector<pair<string, string>> set = find_vector(first, current->production);
 			if ((ind = find(set, string(1, expression[pos]))) != -1) {
 				if (set[ind].second == "&") {
 					struct tree* buff = new tree;
-					buff = init(string(1, expression[pos]));
+					buff = init_tree(string(1, expression[pos]));
 					buff->parent = current;
 					current->chosen.push_back(buff);
 					pos++;
-					for (int j = 0; j < current->parent->chosen.size(); j++) {
-						if (current->parent->chosen[j]->production == current->production) {
-							if (j != current->parent->chosen.size() - 1) {
-								current = current->parent->chosen[j + 1];
+					while (true) {
+						if (current->parent->chosen[index] == current) {
+							if (index != current->parent->chosen.size() - 1) {
+								current = current->parent->chosen[index + 1];
 								break;
 							}
 							else {
@@ -632,22 +642,24 @@ int main() {
 									break;
 								else {
 									current = current->parent;
-									j = -1;
-									continue;
+									index = 0;
 								}
 							}
 						}
+						else
+							index++;
 					}
+					index = 0;
 					continue;
 				}
 				for (auto& child : current->children) {
 					if (child.find(set[ind].second) != string::npos) {
-						if (child[0] == expression[pos] || child.find(set[ind].second) == 0) {
+						if (child.find(expression[pos])==0 || child.find(set[ind].second) == 0) {
 							vector<string> tokens = split(child, "<");
 							for (auto& token : tokens) {
 								if (token.front() != '<') {
 									struct tree* buff = new tree;
-									buff = init(token);
+									buff = init_tree(token);
 									buff->parent = current;
 									current->chosen.push_back(buff);
 									continue;
@@ -660,7 +672,7 @@ int main() {
 										}
 										else {
 											struct tree* buff = new tree;
-											buff = init(leaf->production);
+											buff = init_tree(leaf->production);
 											buff->children.insert(buff->children.begin(), leaf->children.begin(), leaf->children.end());
 											buff->parent = current;
 											current->chosen.push_back(buff);
@@ -678,21 +690,30 @@ int main() {
 			else if (find(set, "e")!=-1){
 				for (int i = 0; i < current->parent->chosen.size(); i++) {
 					if (current->parent->chosen[i] == current) {
-						if (i != 0) {
+						if (i!=0) {
 							set = find_vector(follow, current->parent->chosen[i - 1]->production);
 							if (find(set, string(1, expression[pos])) == -1) {
 								fout << "Error. Character " << expression[pos] << " is not acceptable. Expression doesn't belong to grammar1" << endl;
+								fout.close();
 								return 0;
 							}
 						}
-						if (current->chosen.size() == 0) {
-							struct tree* terminal = new tree;
-							terminal = init("e");
-							current->chosen.push_back(terminal);
-							terminal->parent = current;
+					}
+				}
+				if (current->chosen.size() == 0) {
+					struct tree* terminal = new tree;
+					terminal = init_tree("e");
+					current->chosen.push_back(terminal);
+					terminal->parent = current;
+				}
+				
+				
+				while (true) {
+					if (current->parent->chosen[index] == current) {
+						if (index != current->parent->chosen.size() - 1) {
+							current = current->parent->chosen[index + 1];
+							break;
 						}
-						if (i != current->parent->chosen.size() - 1)
-							current = current->parent->chosen[i + 1];
 						else {
 							if (current->parent == root) {
 								current = current->parent;
@@ -706,36 +727,24 @@ int main() {
 										fout << endl;
 									}
 									fout << "String accepted.";
+									fout.close();
 									return 1;
 								}
 							}
-							current = current->parent;
-							for (int j = 0; j < current->parent->chosen.size(); j++) {
-								if (current->parent->chosen[j]->production == current->production) {
-									if (j != current->parent->chosen.size() - 1) {
-										current = current->parent->chosen[j + 1];
-										break;
-									}
-									else {
-										if (current->parent == root)
-											break;
-										else {
-											current = current->parent;
-											j = -1;
-											continue;
-										}
-									}
-								}
+							else {
+								current = current->parent;
+								index = 0;
 							}
 						}
-						break;
-
 					}
+					else
+						index++;
 				}
 			}
 
 			else {
 				fout << "Error. Character " << expression[pos] << " is not acceptable. Expression doesn't belong to grammar2" << endl;
+				fout.close();
 				return 0;
 			}
 		}
